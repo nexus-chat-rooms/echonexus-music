@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Echo Music Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0e0e0e;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        header {
+            width: 100%;
+            background: linear-gradient(45deg, #1DB954, #1ed760);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        #search-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            width: 80%;
+        }
+        
+        input[type="text"] {
+            padding: 15px;
+            width: 100%;
+            max-width: 400px;
+            border: none;
+            border-radius: 30px 0 0 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            outline: none;
+            font-size: 1rem;
+        }
+        
+        button {
+            padding: 15px 20px;
+            background-color: #1DB954;
+            border: none;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+            color: white;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1ed760;
+        }
+        
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            width: 80%;
+            overflow-y: auto;
+            max-height: 500px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        .track {
+            background-color: #282828;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .track:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(77, 211, 119, 0.7);
+        }
+
+        .track img {
+            border-radius: 10px 10px 0 0;
+            width: 100%;
+            height: auto;
+        }
+
+        .track h3 {
+            margin: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .track p {
+            margin: 0 10px 10px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #b3b3b3;
+        }
+
+        .play-button {
+            background-color: #1db954;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px;
+            margin: 0 10px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: calc(100% - 20px);
+        }
+
+        .play-button:hover {
+            background-color: #1ed760;
+        }
+
+        audio {
+            display: none; /* Hide the audio player */
+        }
+        
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Nexus Echo Music Player</h1>
+    </header>
+    <div id="search-container">
+        <input type="text" id="search" placeholder="Search for music...">
+        <button onclick="searchTracks()"><i class="fa fa-search"></i></button>
+    </div>
+    <div id="results"></div>
+    <audio id="audio-player" controls></audio>
+
+    <script>
+        async function searchTracks() {
+            const accessToken = localStorage.getItem('accessToken');
+            const query = document.getElementById('search').value;
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = ''; // Clear previous results
+
+            const response = await fetch(`https://api.spotify.com/v1/search?type=track&q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const tracks = data.tracks.items;
+
+                tracks.forEach(track => {
+                    const trackElement = document.createElement('div');
+                    trackElement.className = 'track';
+                    trackElement.innerHTML = `
+                        <img src="${track.album.images[0].url}" alt="${track.name}">
+                        <h3>${track.name}</h3>
+                        <p>${track.artists.map(artist => artist.name).join(', ')}</p>
+                        <button class="play-button" onclick="playTrack('${track.preview_url}')">Play Preview</button>
+                    `;
+                    resultsContainer.appendChild(trackElement);
+                });
+            } else {
+                console.error('Error fetching tracks:', response.statusText);
+            }
+        }
+
+        function playTrack(previewUrl) {
+            const audioPlayer = document.getElementById('audio-player');
+            audioPlayer.src = previewUrl;
+            audioPlayer.play();
+        }
+    </script>
+</body>
+</html>
